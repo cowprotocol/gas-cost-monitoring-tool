@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
         let usdc_sell_amount: u128 = rng.gen_range(10000..100000) * 1000000u128;
 
         let gas_price = get_current_gas_price().await?;
-        let gas_info = get_matcha_info(usdc_sell_amount).await?;
+        let (gas_info, output) = get_matcha_info(usdc_sell_amount).await?;
         println!(
             "Current gas price = {:?} Gwei according to blocknative and {:?} Gwei according to matcha  at {:}, quote will be asked with {:?} USDC sellamount",
             gas_price, gas_info.gas_price / 1000000000f32,
@@ -37,9 +37,16 @@ async fn main() -> Result<()> {
              usdc_sell_amount / 1000000u128
         );
         println!(
-            "Matcha costs [USD] = {:?}, and gas units consumed: {:?}",
+            "Platform:         Gas costs [USD] ,       Gas units consumed:           Output amount:",
+        );
+        println!(
+            "----------------------------------------------------------------------------------------------",
+        );
+        println!(
+            "Matcha             {:?},       |            {:?}             |         {:?}   ",
             gas_price * gas_info.gas_amount / gas_info.price / 1000000000f32,
-            gas_info.gas_amount
+            gas_info.gas_amount,
+            output - gas_price * gas_info.gas_amount / 1000000000f32,
         );
         let (gas_amount, output) = oneinch_interface::get_1inch_gas_costs(
             usdc_sell_amount,
@@ -47,7 +54,7 @@ async fn main() -> Result<()> {
         )
         .await?;
         println!(
-            "OneInch costs [USD] = {:?} and gas amount consumed: {:} and total output amount: {:?}",
+            "OneInch:           {:?}        |             {:}             |          {:?}",
             gas_price * gas_amount / gas_info.price / 1000000000f32,
             gas_amount,
             output - gas_price * gas_amount / 1000000000f32,
@@ -55,13 +62,16 @@ async fn main() -> Result<()> {
         let (gas_amount, output) =
             oneinch_enterprise_interface::get_1inch_enterprise_gas_costs(usdc_sell_amount).await?;
         println!(
-            "OneInch enterprise costs [USD] = {:?} and gas amount consumed: {:}, and total output amount: {:?} ",
+            "OneInch[Ent]:      {:?}        |              {:}            |         {:?} ",
             gas_price * gas_amount / gas_info.price / 1000000000f32,
             gas_amount,
             output as f32 - gas_price * gas_amount / 1000000000f32
         );
-        let cowswap_costs = get_cowswap_cost(usdc_sell_amount).await?;
-        println!("Cowswap costs [USD] = {:?}", cowswap_costs);
+        let (cowswap_costs, output) = get_cowswap_cost(usdc_sell_amount).await?;
+        println!(
+            "Cowswap:           {:?}       |                ?                |          {:?}",
+            cowswap_costs, output
+        );
         thread::sleep(three_secs);
     }
 }
