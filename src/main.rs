@@ -1,6 +1,7 @@
 mod block_native_interface;
 mod cowswap_interface;
 mod matcha_inteface;
+mod oneinch_enterprise_interface;
 mod oneinch_interface;
 use rand::Rng;
 use std::{thread, time};
@@ -40,17 +41,25 @@ async fn main() -> Result<()> {
             gas_price * gas_info.gas_amount / gas_info.price / 1000000000f32,
             gas_info.gas_amount
         );
-        let gas_amount = oneinch_interface::get_1inch_gas_costs(
+        let (gas_amount, output) = oneinch_interface::get_1inch_gas_costs(
             usdc_sell_amount,
             (gas_price * 1000000000f32) as u128,
         )
         .await?;
         println!(
-            "OneInch costs [USD] = {:?} and gas amount consumed: {:}",
+            "OneInch costs [USD] = {:?} and gas amount consumed: {:} and total output amount: {:?}",
             gas_price * gas_amount / gas_info.price / 1000000000f32,
-            gas_amount
+            gas_amount,
+            output - gas_price * gas_amount / 1000000000f32,
         );
-
+        let (gas_amount, output) =
+            oneinch_enterprise_interface::get_1inch_enterprise_gas_costs(usdc_sell_amount).await?;
+        println!(
+            "OneInch enterprise costs [USD] = {:?} and gas amount consumed: {:}, and total output amount: {:?} ",
+            gas_price * gas_amount / gas_info.price / 1000000000f32,
+            gas_amount,
+            output as f32 - gas_price * gas_amount / 1000000000f32
+        );
         let cowswap_costs = get_cowswap_cost(usdc_sell_amount).await?;
         println!("Cowswap costs [USD] = {:?}", cowswap_costs);
         thread::sleep(three_secs);
